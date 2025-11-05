@@ -5,8 +5,13 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // 🧠 Obtener rol desde localStorage (ajusta si usas contexto o props)
+  const userData = JSON.parse(localStorage.getItem("user")) || {};
+  const rol = userData.rol || "operador"; // valor por defecto
+
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     navigate("/");
   };
 
@@ -32,6 +37,7 @@ export default function Sidebar() {
               📊 Dashboard
             </Link>
           </li>
+
           <li>
             <Link
               to="/app/reportes"
@@ -44,6 +50,7 @@ export default function Sidebar() {
               📄 Carga de reportes
             </Link>
           </li>
+
           <li>
             <Link
               to="/app/ocr"
@@ -56,18 +63,22 @@ export default function Sidebar() {
               🖼️ OCR imágenes
             </Link>
           </li>
-          <li>
-            <Link
-              to="/app/usuarios"
-              className={`block py-2 px-3 rounded-lg transition ${
-                isActive("/app/usuarios")
-                  ? "bg-red-500 font-semibold"
-                  : "hover:bg-red-700"
-              }`}
-            >
-              👥 Usuarios
-            </Link>
-          </li>
+
+          {/* 👥 Solo visible si el usuario NO es operador */}
+          {rol !== "operador" && (
+            <li>
+              <Link
+                to="/app/usuarios"
+                className={`block py-2 px-3 rounded-lg transition ${
+                  isActive("/app/usuarios")
+                    ? "bg-red-500 font-semibold"
+                    : "hover:bg-red-700"
+                }`}
+              >
+                👥 Usuarios
+              </Link>
+            </li>
+          )}
         </ul>
       </div>
 

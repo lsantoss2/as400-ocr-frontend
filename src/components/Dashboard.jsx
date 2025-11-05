@@ -16,17 +16,22 @@ export default function Dashboard() {
   const [estados, setEstados] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [resumen, setResumen] = useState({ total: 0, porTipo: {} });
+
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [selectedTipo, setSelectedTipo] = useState("");
+  const [selectedUsuario, setSelectedUsuario] = useState("");
 
-  // Cargar datos del backend
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async (filter = false) => {
     try {
-      const params = filter ? { startDate, endDate } : {};
+      const params = filter
+        ? { startDate, endDate, tipo: selectedTipo, usuario: selectedUsuario }
+        : {};
+
       const [analisisRes, estadosRes, usuariosRes] = await Promise.all([
         axios.get("http://localhost:4000/api/analisis", { params }),
         axios.get("http://localhost:4000/api/estados", { params }),
@@ -37,7 +42,7 @@ export default function Dashboard() {
       setEstados(estadosRes.data);
       setUsuarios(usuariosRes.data);
 
-      // Calcular resumen
+      // 📊 Calcular resumen general
       const total = analisisRes.data.length;
       const porTipo = analisisRes.data.reduce((acc, item) => {
         acc[item.tipo] = (acc[item.tipo] || 0) + 1;
@@ -49,36 +54,73 @@ export default function Dashboard() {
     }
   };
 
-  const handleFiltrar = () => {
-    fetchData(true);
-  };
-
+  const handleFiltrar = () => fetchData(true);
   const handleLimpiar = () => {
     setStartDate("");
     setEndDate("");
+    setSelectedTipo("");
+    setSelectedUsuario("");
     fetchData(false);
   };
 
+  // 🔹 Obtener tipos únicos
+  const tiposUnicos = [...new Set(analisis.map((a) => a.tipo))];
+  // 🔹 Obtener usuarios únicos
+  const usuariosUnicos = [...new Set(analisis.map((a) => a.usuario))];
+
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-8 bg-gray-50 min-h-screen flex flex-col items-center">
       <h1 className="text-3xl font-bold text-blue-800 text-center mb-8 flex items-center justify-center gap-2">
-        📊 Dashboard AS400 OCR
+        Historico de procesos AS400
       </h1>
 
       {/* 🔍 Filtros */}
       <div className="flex flex-wrap justify-center gap-4 mb-8">
+        {/* Fecha inicio */}
         <input
           type="date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
           className="border border-gray-300 rounded-lg p-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
         />
+
+        {/* Fecha fin */}
         <input
           type="date"
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
           className="border border-gray-300 rounded-lg p-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
         />
+
+        {/* Tipo */}
+        <select
+          value={selectedTipo}
+          onChange={(e) => setSelectedTipo(e.target.value)}
+          className="border border-gray-300 rounded-lg p-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+        >
+          <option value="">Todos los tipos</option>
+          {tiposUnicos.map((tipo) => (
+            <option key={tipo} value={tipo}>
+              {tipo}
+            </option>
+          ))}
+        </select>
+
+        {/* Usuario */}
+        <select
+          value={selectedUsuario}
+          onChange={(e) => setSelectedUsuario(e.target.value)}
+          className="border border-gray-300 rounded-lg p-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+        >
+          <option value="">Todos los usuarios</option>
+          {usuariosUnicos.map((usuario) => (
+            <option key={usuario} value={usuario}>
+              {usuario}
+            </option>
+          ))}
+        </select>
+
+        {/* Botones */}
         <button
           onClick={handleFiltrar}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition"
@@ -94,7 +136,7 @@ export default function Dashboard() {
       </div>
 
       {/* 📋 Resumen general */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10 w-full md:w-10/12">
         <div className="bg-white rounded-2xl shadow p-6 text-center">
           <h3 className="text-gray-600 font-semibold">Total registros</h3>
           <p className="text-3xl font-bold text-blue-800">{resumen.total}</p>
@@ -115,14 +157,12 @@ export default function Dashboard() {
 
         <div className="bg-white rounded-2xl shadow p-6 text-center">
           <h3 className="text-gray-600 font-semibold">Última actualización</h3>
-          <p className="text-sm text-gray-700">
-            {new Date().toLocaleString()}
-          </p>
+          <p className="text-sm text-gray-700">{new Date().toLocaleString()}</p>
         </div>
       </div>
 
       {/* 📊 Distribución por Estado */}
-      <div className="bg-white rounded-2xl shadow-md p-6 mb-10">
+      <div className="bg-white rounded-2xl shadow-md p-6 mb-10 w-full md:w-10/12">
         <h3 className="text-lg font-bold text-blue-800 text-center mb-4">
           Distribución por Estado
         </h3>
@@ -139,7 +179,7 @@ export default function Dashboard() {
       </div>
 
       {/* 👥 Actividad por Usuario */}
-      <div className="bg-white rounded-2xl shadow-md p-6 mb-10">
+      <div className="bg-white rounded-2xl shadow-md p-6 mb-10 w-full md:w-10/12">
         <h3 className="text-lg font-bold text-blue-800 text-center mb-4">
           Actividad por Usuario
         </h3>
@@ -156,7 +196,7 @@ export default function Dashboard() {
       </div>
 
       {/* 🧾 Registros detallados */}
-      <div className="bg-white rounded-2xl shadow-md p-6">
+      <div className="bg-white rounded-2xl shadow-md p-6 w-full md:w-10/12">
         <h3 className="text-lg font-bold text-blue-800 text-center mb-4">
           Registros detallados
         </h3>
@@ -165,16 +205,13 @@ export default function Dashboard() {
             No se han registrado análisis todavía.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full border border-gray-200 text-sm">
+          <div className="overflow-x-auto flex justify-center">
+            <table className="min-w-[80%] border border-gray-200 text-sm text-center">
               <thead className="bg-blue-100 text-blue-900">
                 <tr>
-                  <th className="px-4 py-2">ID</th>
-                  <th className="px-4 py-2">Tipo</th>
-                  <th className="px-4 py-2">Usuario</th>
-                  <th className="px-4 py-2">Función</th>
-                  <th className="px-4 py-2">Estado</th>
-                  <th className="px-4 py-2">Fecha</th>
+                  <th className="px-6 py-3">Tipo</th>
+                  <th className="px-6 py-3">Usuario</th>
+                  <th className="px-6 py-3">Fecha</th>
                 </tr>
               </thead>
               <tbody>
@@ -183,12 +220,9 @@ export default function Dashboard() {
                     key={a.id}
                     className="border-b hover:bg-gray-50 transition"
                   >
-                    <td className="px-4 py-2">{a.id}</td>
-                    <td className="px-4 py-2">{a.tipo}</td>
-                    <td className="px-4 py-2">{a.usuario}</td>
-                    <td className="px-4 py-2">{a.funcion}</td>
-                    <td className="px-4 py-2">{a.estado}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-6 py-2">{a.tipo}</td>
+                    <td className="px-6 py-2">{a.usuario}</td>
+                    <td className="px-6 py-2">
                       {new Date(a.fecha).toLocaleString()}
                     </td>
                   </tr>

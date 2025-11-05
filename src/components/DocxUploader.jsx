@@ -93,55 +93,56 @@ export default function DocxUploader() {
     generateAS400Report(analysis);
   };
 
-  // 💾 Guardar análisis completo en la base de datos
-  const handleSaveToDatabase = async () => {
-    if (!analysis) return alert("⚠️ No hay datos para guardar.");
+// 💾 Guardar análisis completo en la base de datos
+const handleSaveToDatabase = async () => {
+  if (!analysis) return alert("⚠️ No hay datos para guardar.");
 
-    try {
-      setStatus("💾 Guardando análisis en la base de datos...");
+  try {
+    setStatus("💾 Guardando análisis en la base de datos...");
 
-      // 1️⃣ Insertar análisis principal
-      const res = await axios.post("http://localhost:4000/api/analisis", {
-        tipo: analysis.tipo,
-        usuario: Object.keys(analysis.usuarios)[0] || "DESCONOCIDO",
-        funcion: Object.keys(analysis.registros[0] || {})[0] || "N/A",
-        estado: Object.keys(analysis.estados)[0] || "N/A",
-        fecha: new Date(),
+    // 1️⃣ Insertar análisis principal
+    const res = await axios.post("http://localhost:4000/api/analisis", {
+      tipo: analysis.tipo,
+      usuario: Object.keys(analysis.usuarios)[0] || "DESCONOCIDO",
+      funcion: Object.keys(analysis.registros[0] || {})[0] || "N/A",
+      estado: Object.keys(analysis.estados)[0] || "N/A",
+      fecha: new Date(),
+    });
+
+    const analisisId = res.data.id;
+
+    // 2️⃣ Insertar estados (ruta correcta)
+    for (const [estado, cantidad] of Object.entries(analysis.estados)) {
+      await axios.post("http://localhost:4000/api/analisis/estados", {
+        analisis_id: analisisId,
+        estado,
+        cantidad,
       });
-
-      const analisisId = res.data.id;
-
-      // 2️⃣ Insertar estados
-      for (const [estado, cantidad] of Object.entries(analysis.estados)) {
-        await axios.post("http://localhost:4000/api/estados", {
-          analisis_id: analisisId,
-          estado,
-          cantidad,
-        });
-      }
-
-      // 3️⃣ Insertar usuarios (ruta corregida)
-      for (const [usuario, cantidad] of Object.entries(analysis.usuarios)) {
-        await axios.post("http://localhost:4000/api/usuarios-analisis", {
-          analisis_id: analisisId,
-          usuario,
-          cantidad,
-        });
-      }
-
-      setStatus("✅ Análisis y datos guardados exitosamente en MySQL.");
-      alert("✅ Todos los datos del análisis fueron guardados correctamente.");
-    } catch (err) {
-      console.error("❌ Error al guardar:", err.response?.data || err.message);
-      setStatus("❌ Error al guardar en la base de datos.");
-      alert("❌ Ocurrió un error al guardar los datos en MySQL.");
     }
-  };
+
+    // 3️⃣ Insertar usuarios (ruta correcta)
+    for (const [usuario, cantidad] of Object.entries(analysis.usuarios)) {
+      await axios.post("http://localhost:4000/api/analisis/usuarios", {
+        analisis_id: analisisId,
+        usuario,
+        cantidad,
+      });
+    }
+
+    setStatus("✅ Análisis y datos guardados exitosamente en MySQL.");
+    alert("✅ Todos los datos del análisis fueron guardados correctamente.");
+  } catch (err) {
+    console.error("❌ Error al guardar:", err.response?.data || err.message);
+    setStatus("❌ Error al guardar en la base de datos.");
+    alert("❌ Ocurrió un error al guardar los datos en MySQL.");
+  }
+};
+
 
   return (
     <div className="p-6 bg-white rounded-2xl shadow-md w-full max-w-3xl mx-auto mt-10">
       <h2 className="text-2xl font-bold mb-4 text-gray-800 text-center">
-        📄 Procesar archivo Word (Evidencias AS400)
+        Evidencias en formato Word
       </h2>
 
       {/* Selector de tipo */}

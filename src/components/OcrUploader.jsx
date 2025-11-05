@@ -42,7 +42,7 @@ const OcrUploader = () => {
   return (
     <div className="flex flex-col items-center justify-center p-6 bg-white rounded-2xl shadow-lg max-w-2xl mx-auto mt-10">
       <h1 className="text-2xl font-bold text-gray-800 mb-4">
-        OCR del Sistema AS400
+        Extractor de texto de una imagen
       </h1>
 
       {/* Subir imagen */}
